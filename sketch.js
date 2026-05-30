@@ -1,48 +1,34 @@
-let bgImages = [];
-let headImages = [];
-let torsoImages = [];
-let legImages = [];
-let feetImages = [];
+let heads = [];
+let torsos = [];
+let legs = [];
+let feet = [];
 
-let bgSounds = [];
 let headSounds = [];
 let torsoSounds = [];
 let legSounds = [];
 let feetSounds = [];
 
-let bgIndex = 0;
 let headIndex = 0;
 let torsoIndex = 0;
 let legIndex = 0;
 let feetIndex = 0;
 
-let artX = 250;
-let artY = 60;
-let artW = 500;
-let artH = 700;
+let headBox = {};
+let torsoBox = {};
+let legBox = {};
+let feetBox = {};
 
-let headY = 120;
-let torsoY = 260;
-let legY = 420;
-let feetY = 590;
-
-let partW = 360;
-let headH = 140;
-let torsoH = 170;
-let legH = 170;
-let feetH = 110;
+let started = false;
 
 function preload() {
-  soundFormats("mp3", "wav");
+  soundFormats("mp3", "wav", "m4a");
 
   for (let i = 1; i <= 6; i++) {
-    bgImages.push(loadImage("assets/background" + i + ".jpg"));
-    headImages.push(loadImage("assets/head" + i + ".png"));
-    torsoImages.push(loadImage("assets/torso" + i + ".png"));
-    legImages.push(loadImage("assets/legs" + i + ".png"));
-    feetImages.push(loadImage("assets/feet" + i + ".png"));
+    heads.push(loadImage("assets/head" + i + ".png"));
+    torsos.push(loadImage("assets/torso" + i + ".png"));
+    legs.push(loadImage("assets/legs" + i + ".png"));
+    feet.push(loadImage("assets/feet" + i + ".png"));
 
-    bgSounds.push(loadSound("assets/backgroundSound" + i + ".mp3"));
     headSounds.push(loadSound("assets/headSound" + i + ".mp3"));
     torsoSounds.push(loadSound("assets/torsoSound" + i + ".mp3"));
     legSounds.push(loadSound("assets/legsSound" + i + ".mp3"));
@@ -51,104 +37,97 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(1000, 820);
+  createCanvas(windowWidth, windowHeight);
   imageMode(CENTER);
-  textFont("Helvetica");
 }
 
 function draw() {
-  background(0);
+  background(255);
 
-  fill(255);
-  textSize(18);
-  textAlign(LEFT);
-  text("CLICK EACH BODY PART TO CHANGE IMAGE AND SOUND", 40, 40);
+  let centerX = width / 2;
 
-  drawBackgroundLayer();
-  drawBody();
+  let totalH = height * 0.9;
+  let startY = height * 0.05;
+
+  let headH = totalH * 0.11;
+  let torsoH = totalH * 0.33;
+  let legH = totalH * 0.44;
+  let feetH = totalH * 0.12;
+
+  let gap = height * 0.01;
+
+  let headY = startY + headH / 2;
+  let torsoY = headY + headH / 2 + gap + torsoH / 2;
+  let legY = torsoY + torsoH / 2 + gap + legH / 2;
+  let feetY = legY + legH / 2 + gap + feetH / 2;
+
+  drawPart(legs[legIndex], centerX, legY, legH, legBox);
+  drawPart(torsos[torsoIndex], centerX, torsoY, torsoH, torsoBox);
+  drawPart(feet[feetIndex], centerX, feetY, feetH, feetBox);
+  drawPart(heads[headIndex], centerX, headY, headH, headBox);
 }
 
-function drawBackgroundLayer() {
-  imageMode(CORNER);
-
-  let border = 40;
-
-  image(
-    bgImages[bgIndex],
-    artX + border,
-    artY + border,
-    artW - border * 2,
-    artH - border * 2
-  );
-
-  noFill();
-  stroke(0);
-  strokeWeight(border);
-  rect(artX, artY, artW, artH);
-
-  noStroke();
-}
-
-function drawBody() {
-  imageMode(CENTER);
-
-  let centerX = artX + artW / 2;
-
-  drawImageSameHeight(headImages[headIndex], centerX, headY + headH / 2, headH);
-  drawImageSameHeight(torsoImages[torsoIndex], centerX, torsoY + torsoH / 2, torsoH);
-  drawImageSameHeight(legImages[legIndex], centerX, legY + legH / 2, legH);
-  drawImageSameHeight(feetImages[feetIndex], centerX, feetY + feetH / 2, feetH);
-}
-
-function drawImageSameHeight(img, x, y, targetH) {
+function drawPart(img, x, y, targetH, box) {
   let ratio = img.width / img.height;
   let targetW = targetH * ratio;
+
   image(img, x, y, targetW, targetH);
+
+  box.x = x - targetW / 2;
+  box.y = y - targetH / 2;
+  box.w = targetW;
+  box.h = targetH;
 }
 
 function mousePressed() {
   userStartAudio();
 
-  let centerX = artX + artW / 2;
-  let leftX = centerX - partW / 2;
-  let rightX = centerX + partW / 2;
-
-  if (mouseX > artX && mouseX < artX + artW && mouseY > artY && mouseY < artY + 60) {
-    bgIndex = nextIndex(bgIndex);
-    switchSound(bgSounds, bgIndex);
+  if (!started) {
+    startAllSounds();
+    started = true;
   }
 
-  if (mouseX > leftX && mouseX < rightX && mouseY > headY && mouseY < headY + headH) {
-    headIndex = nextIndex(headIndex);
+  if (inside(headBox)) {
+    headIndex = (headIndex + 1) % 6;
     switchSound(headSounds, headIndex);
-  }
-
-  if (mouseX > leftX && mouseX < rightX && mouseY > torsoY && mouseY < torsoY + torsoH) {
-    torsoIndex = nextIndex(torsoIndex);
+  } else if (inside(torsoBox)) {
+    torsoIndex = (torsoIndex + 1) % 6;
     switchSound(torsoSounds, torsoIndex);
-  }
-
-  if (mouseX > leftX && mouseX < rightX && mouseY > legY && mouseY < legY + legH) {
-    legIndex = nextIndex(legIndex);
+  } else if (inside(legBox)) {
+    legIndex = (legIndex + 1) % 6;
     switchSound(legSounds, legIndex);
-  }
-
-  if (mouseX > leftX && mouseX < rightX && mouseY > feetY && mouseY < feetY + feetH) {
-    feetIndex = nextIndex(feetIndex);
+  } else if (inside(feetBox)) {
+    feetIndex = (feetIndex + 1) % 6;
     switchSound(feetSounds, feetIndex);
   }
 }
 
-function nextIndex(currentIndex) {
-  return (currentIndex + 1) % 6;
+function inside(box) {
+  return (
+    mouseX > box.x &&
+    mouseX < box.x + box.w &&
+    mouseY > box.y &&
+    mouseY < box.y + box.h
+  );
 }
 
-function switchSound(soundArray, currentIndex) {
-  for (let i = 0; i < soundArray.length; i++) {
-    if (soundArray[i].isPlaying()) {
-      soundArray[i].stop();
+function startAllSounds() {
+  headSounds[headIndex].loop();
+  torsoSounds[torsoIndex].loop();
+  legSounds[legIndex].loop();
+  feetSounds[feetIndex].loop();
+}
+
+function switchSound(soundArray, index) {
+  for (let s of soundArray) {
+    if (s.isPlaying()) {
+      s.stop();
     }
   }
 
-  soundArray[currentIndex].loop();
+  soundArray[index].loop();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
